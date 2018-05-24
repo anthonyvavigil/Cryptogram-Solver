@@ -2,7 +2,8 @@ import java.util.ArrayList;
 
 public class RichLetter {
 	ArrayList<String> possibleCorrespondences = new ArrayList();
-	ArrayList<RichLetter> dependencies = new ArrayList();
+	ArrayList<String> tempPossibilities = new ArrayList();
+	ArrayList<String> tempImpossibilities = new ArrayList();
 	String name;
 	char charName;
 	boolean certain = false;
@@ -21,17 +22,35 @@ public class RichLetter {
 	public void setCertain() {
 		certain = true;
 	}
-	public void addDependency(RichLetter a) {
-		dependencies.add(a);
+	public void addTempPossibility(String a) {
+		tempPossibilities.add(a);
+	}
+	public void setImpossibilities(ArrayList<String> impossibilities) {
+		this.tempImpossibilities = impossibilities;
+	}
+	public void setPossibilities(ArrayList<String> possibilities) {
+		this.possibleCorrespondences = possibilities;
 	}
 	
-	public ArrayList<RichLetter> getDependencies() {
-		return dependencies;
+	
+	public ArrayList<String> getImpossibilities() {
+		return tempImpossibilities;
+	}
+	public void removeImpossibility(String a) {
+		if(tempImpossibilities.indexOf(a) > -1) {
+			tempImpossibilities.remove(tempImpossibilities.indexOf(a));
+		}
+	}
+	public ArrayList<String> getDependencies() {
+		return tempPossibilities;
 	}
 	public String getName() {
 		return name;
 	}
-	public ArrayList<String> getPossibleCorrespondences() {
+	public ArrayList<String> getCorrespondences() {
+		return possibleCorrespondences;
+	}
+	public ArrayList<String> getTempPossibilities() {
 		return possibleCorrespondences;
 	}
 	public boolean isCertain() {

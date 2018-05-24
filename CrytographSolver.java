@@ -15,12 +15,12 @@ public class CrytographSolver {
 		boolean quitted = false;
 		ArrayList<String> toUser = new ArrayList();
 		String letterFreq = "";
-		int dictionaryTolerance = 4000; //gets this many words from the dictionary, which is ordered by frequency
+		int dictionaryTolerance = 1498; //gets this many words from the dictionary, which is ordered by frequency
 		
 		
 		try {
 		scn = new Scanner(System.in);
-		allWords = new Scanner(new File("dictionary.txt"));
+		allWords = new Scanner(new File("exclusiveDictionary.txt"));
 		} catch (Exception e){
 			System.out.println("ERR: Could not establish scanner");
 			System.out.println(e.getMessage());
@@ -85,15 +85,15 @@ public class CrytographSolver {
 				letterFreq = scn2.nextLine();
 				if(cou%500 == 0) {System.out.println("running, checked " + cou + " responses"); }
 				cou++;
-				sol.add(relativeFrequencySolve(nextLine.toLowerCase(), tolerance, letterFreq));
+				//sol.add(relativeFrequencySolve(nextLine.toLowerCase(), tolerance, letterFreq));
 			}
-			sol = goodSolutions(sol, dictionary, tolerance);
-				System.out.println("number of solutions: " + sol.size());
+			//sol = goodSolutions(sol, dictionary, tolerance);
+			//	System.out.println("number of solutions: " + sol.size());
 			for(int w = 0; w < sol.size(); w++) {
 				System.out.println(sol.get(w));
 			}
 			
-			
+			sol = methodicSolve(nextLine.toLowerCase(), dictionary, tolerance);
 			System.out.println("-------------------------------------------------------------------------------------------------------------------");
 				}	
 			}
@@ -178,13 +178,32 @@ public class CrytographSolver {
 		
 	}
 	
+	public static String depunctuate(String input) {
+		String tempStr = "";
+		for(int j = 0; j < input.length(); j++){
+			if(((int) input.charAt(j)) > 96 && ((int) input.charAt(j)) < 123 || (int) input.charAt(j) == 32){
+				tempStr = tempStr + input.substring(j, j+1);
+			}
+		}
+		input = tempStr;
+		return input;
+	}
+	
 	public static ArrayList<String> methodicSolve(String input, ArrayList<String> dic, int tol) {
+		//loops through string and removes punctuation
+		input = depunctuate(input);
+		
+		ArrayList<RichLetter> allLetters = new ArrayList();
+		ArrayList<String> possibleWords = new ArrayList();
+		int lengthWithoutSpaces = 0;
 		String[] inputSplit = input.split(" ");
 		ArrayList<String> inputArr = new ArrayList();
 		for(int i = 0; i < inputSplit.length; i++) {
 			inputArr.add(inputSplit[i]);
+			lengthWithoutSpaces += inputSplit[i].length();
 		}
-		Collections.sort(inputArr, new Comparator<String>() { //sorts list by word length
+		
+		Collections.sort(inputArr, new Comparator<String>() { //sorts sentence by word length
             @Override
             public int compare(String o1, String o2) {             
                 if (o1.length()!=o2.length()) {
@@ -194,53 +213,144 @@ public class CrytographSolver {
             }
         });
 		
+		//initialize letter possibilities - one letter for each of the alphabet, one letter correspondence for each letter of the alphabet
+		String abcs = "a b c d e f g h i j k l m n o p q r s t u v w x y z";
+		String[] abcSplit = abcs.split(" ");
+		
+		for(int i = 0; i < abcSplit.length; i++) {
+			RichLetter temp = new RichLetter(abcSplit[i]);
+				for(int j  = 0; j < abcSplit.length; j++) {
+					temp.addPossibleCorrespondence(abcSplit[j]);
+				}
+			allLetters.add(temp);
+		}
+		
+		
 		boolean methodFinished = false;
-		while(!methodFinished) {
-			String temp = input;
-			String[] tempArr = input.split(" ");
-			ArrayList<RichLetter> tempRich = new ArrayList();
-			ArrayList<String> storedRich = new ArrayList();
-			for(int i = 0; i < tempArr.length; i++) {
-				//get next word in array
-				String cur = tempArr[i];
-				if(cur.length() == 1 && ! (storedRich.indexOf(cur) > -1)) { //if length one and does not already exist
-					RichLetter one = new RichLetter(cur);
-					one.addPossibleCorrespondence("a"); one.addPossibleCorrespondence("i");
-					tempRich.add(one);
-					storedRich.add(one.getName());
-				} else if (! (cur.length() == 1)) { //if length is not one (existence checked later)
-				
-				//get all next word length words from dictionary
-				ArrayList<String> thatLength = new ArrayList();
-					for(int j = 0; j < dic.size(); j++) {
-						if(dic.get(j).length() == thatLength.size()) {
-							thatLength.add(dic.get(j)); //adds if it's the same length
-						} else if (dic.get(j).length() > thatLength.size()) {
-							j = dic.size()+1; //ends loop if the word is longer
-						} else { } //do nothing if it's less and let the list increment
-					}
+		int count = 0;
+		while(!methodFinished) { //loops through words in list
 			
-				//increment all thatLength words and add to the rich letter object for that possibility
-				for(int w = 0; w < thatLength.size(); w++) {
-					int ind = -1;
-					//check if the letter at that index in input already has a richLetter
-					String curStr = input.substring(w, w+1); //length 1 string that holds the current letter
-					RichLetter a;
-						if(storedRich.indexOf(curStr) > -1) { //already exists in list
-							ind = storedRich.indexOf(curStr);
-							a = tempRich.get(ind);
-						} else { //doesn't exist in list
-							a = new RichLetter(curStr);
-						}
+			String curWord = inputArr.get(count);
+			
+			if(curWord.length() == 1) {
+				ArrayList<String> a = new ArrayList(); a.add("a"); a.add("i");
+				allLetters.get(((int) curWord.charAt(0)-97)).setPossibilities(a);
+			}
+			/*
+			 * 097 corresponds to a, 122 to z
+			 */
+			
+			//loops through thatLength words
+			int w = 0;
+			
+
+			int n = 0;
+			while(dic.get(w).length() <= inputArr.get(count).length() && n < dic.size()) { //loops until it hits words longer than those from the input array				
+				if(dic.get(w).length() == inputArr.get(count).length()) {
+					String tempDic = dic.get(w);
+					String tempInp = inputArr.get(count);
 					
-					}
-				}					
+					//handles letters in pairs to speed up processing
+					for(int j = 0; j < tempDic.length(); j++) { //loops through word from dictionary
+						if(tempDic.length()-j >= 2) { // if there are two more letters to look at
+							
+							char char1 = tempInp.charAt(j); //gets pair of characters to be analyzed - (characters so they can easily be switched to index)
+							char char2 = tempInp.charAt(j+1);
+							
+							RichLetter l1 = allLetters.get(((int) char1)-97); //converts char to numbers
+							RichLetter l2 = allLetters.get(((int) char2)-97);
+							
+							for(int t = 0; t < l1.getCorrespondences().size(); t++) {
+								for(int y = 0; y < l2.getCorrespondences().size(); y++) {
+									//check if the word has any possibilities
+									
+									
+									String tempA = l1.getCorrespondences().get(t) + l2.getCorrespondences().get(y);
+									String tempB = tempDic.substring(j, j+2);
+									
+									
+									//if those two letter pairs match the letters from the word
+									if(tempA.equals(tempB)) {
+										//System.out.println(tempA + ":" + tempB);
+										possibleWords.add(tempDic);
+										
+										allLetters.get(((int) char1)-97).addTempPossibility(tempDic.substring(j, j+1));
+										allLetters.get(((int) char2)-97).addTempPossibility(tempDic.substring(j+1, j+2));
+									} else {
+										
+									}
+								}
+							}
+						}						
+					}									
+				}	
+				if(w < dic.size()-1) { 
+					w++;
+				} else {
+					w = 0;
+				}
+				n++;
+			}
+			
+			if(count%20 == 0) {
+				System.out.println("at word " + count + " from the input, total words are " + (inputArr.size()-1)); 
+			}
+			if(count < inputArr.size()-1) { //keeps looping through the input by word
+				count++;
+			} else {
+				
+				dic = crossCheck(dic, possibleWords);
+				
+				for(int i = 0; i < allLetters.size(); i++) {
+					ArrayList<String> tempCor = allLetters.get(i).getCorrespondences();
+					ArrayList<String> tempPos = allLetters.get(i).getTempPossibilities();
+					
+					tempCor = crossCheck(tempCor, tempPos);
+				//	System.out.println(tempCor);
+				//	System.out.println(tempPos);
+					System.out.println(allLetters.get(i).getName() + ":corresp size:" + tempCor.size());
+					allLetters.get(i).setPossibilities(tempCor);
+					//System.out.println("end of line");
+				}
+				
+				count = 0;
+				
+			}
+			//System.out.println("dic: " + dic.size());
+			//System.out.println("inpArr: " + inputArr.size() + ":" + count); 
+			
+		}
+		return dic;
+	}
+	
+	public static ArrayList<String> removeDuplicatesInOrderedList(ArrayList<String> input) {
+		for(int i = 0; i < input.size(); i++) {
+			if(i < input.size()-1) {
+				if(input.get(i).equals(input.get(i+1))) {
+					input.remove(i+1);
+					i--;
+				}
 			}
 		}
 		
-		return dic;
+		
+		return input;
+	}
+	
+	public static ArrayList<String> crossCheck(ArrayList<String> base, ArrayList<String> toStay) {
+		ArrayList<String> temp = new ArrayList();
+		for(int i = 0; i < base.size(); i++) {
+			for(int j = 0; j < toStay.size(); j++) {
+				if(base.get(i).equals(toStay.get(j))) { //if it's in both arrayLists
+					temp.add(base.get(i));
+				}
+			}	
+		}
+		temp = removeDuplicatesInOrderedList(temp);
+		return temp;
 		
 	}
+	
 	
 	public static ArrayList<String> caesarSolve(String input, ArrayList<String> dic, int tol) {
 		ArrayList<String> possib = new ArrayList();
