@@ -245,7 +245,7 @@ public class CrytographSolver {
 			
 
 			int n = 0;
-			while(dic.get(w).length() <= inputArr.get(count).length() && n < dic.size()) { //loops until it hits words longer than those from the input array				
+			while(dic.get(w).length() <= inputArr.get(count).length() && n < dic.size() && dic.get(w).length() < 3) { //loops until it hits words longer than those from the input array				
 				if(dic.get(w).length() == inputArr.get(count).length()) {
 					String tempDic = dic.get(w);
 					String tempInp = inputArr.get(count);
@@ -259,6 +259,8 @@ public class CrytographSolver {
 							
 							RichLetter l1 = allLetters.get(((int) char1)-97); //converts char to numbers
 							RichLetter l2 = allLetters.get(((int) char2)-97);
+						//	System.out.println((((int) char1)-97) + ":" + (((int) char2)-97));
+						//	System.out.println(char1 + ":" + char2);
 							
 							for(int t = 0; t < l1.getCorrespondences().size(); t++) {
 								for(int y = 0; y < l2.getCorrespondences().size(); y++) {
@@ -274,6 +276,8 @@ public class CrytographSolver {
 										//System.out.println(tempA + ":" + tempB);
 										possibleWords.add(tempDic);
 										
+									//	System.out.println(tempDic.substring(j, j+2));
+									//	System.out.println(allLetters.get(((int) char1)-97).getTempPossibilities());
 										allLetters.get(((int) char1)-97).addTempPossibility(tempDic.substring(j, j+1));
 										allLetters.get(((int) char2)-97).addTempPossibility(tempDic.substring(j+1, j+2));
 									} else {
@@ -289,6 +293,24 @@ public class CrytographSolver {
 				} else {
 					w = 0;
 				}
+				
+				
+				//every 10 letters it cross-checks possibilities
+				if(n%10 == 0) {
+					for(int i = 0; i < allLetters.size(); i++) {
+						ArrayList<String> tempCor = allLetters.get(i).getCorrespondences();
+						ArrayList<String> tempPos = allLetters.get(i).getTempPossibilities();
+						
+						tempCor = crossCheck(tempCor, tempPos);
+					//	System.out.println(tempCor);
+					//	System.out.println(tempPos);
+					//	System.out.println(allLetters.get(i).getName() + ":corresp size:" + allLetters.get(i).getCorrespondences().size());
+						allLetters.get(i).setPossibilities(tempCor);
+						allLetters.get(i).setTempPossibilities(new ArrayList());
+					//	System.out.println(allLetters.get(i).getName() + ":corresp size:" + allLetters.get(i).getCorrespondences().size());
+					//	System.out.println("end of line");
+					}
+				}
 				n++;
 			}
 			
@@ -297,21 +319,10 @@ public class CrytographSolver {
 			}
 			if(count < inputArr.size()-1) { //keeps looping through the input by word
 				count++;
-			} else {
-				
 				dic = crossCheck(dic, possibleWords);
 				
-				for(int i = 0; i < allLetters.size(); i++) {
-					ArrayList<String> tempCor = allLetters.get(i).getCorrespondences();
-					ArrayList<String> tempPos = allLetters.get(i).getTempPossibilities();
-					
-					tempCor = crossCheck(tempCor, tempPos);
-				//	System.out.println(tempCor);
-				//	System.out.println(tempPos);
-					System.out.println(allLetters.get(i).getName() + ":corresp size:" + tempCor.size());
-					allLetters.get(i).setPossibilities(tempCor);
-					//System.out.println("end of line");
-				}
+				
+			} else {
 				
 				count = 0;
 				
@@ -332,8 +343,6 @@ public class CrytographSolver {
 				}
 			}
 		}
-		
-		
 		return input;
 	}
 	

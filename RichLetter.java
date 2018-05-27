@@ -31,6 +31,9 @@ public class RichLetter {
 	public void setPossibilities(ArrayList<String> possibilities) {
 		this.possibleCorrespondences = possibilities;
 	}
+	public void setTempPossibilities(ArrayList<String> tempPossibilities) {
+		this.tempPossibilities = tempPossibilities;
+	}
 	
 	
 	public ArrayList<String> getImpossibilities() {
