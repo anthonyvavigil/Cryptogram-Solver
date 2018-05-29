@@ -7,6 +7,7 @@ public class RichLetter {
 	String name;
 	char charName;
 	boolean certain = false;
+	public boolean isAorI = false;
 	
 
 	public RichLetter(String name) {
@@ -34,6 +35,9 @@ public class RichLetter {
 	public void setTempPossibilities(ArrayList<String> tempPossibilities) {
 		this.tempPossibilities = tempPossibilities;
 	}
+	public void setAorI() {
+		isAorI = true;
+	}
 	
 	
 	public ArrayList<String> getImpossibilities() {
@@ -54,9 +58,12 @@ public class RichLetter {
 		return possibleCorrespondences;
 	}
 	public ArrayList<String> getTempPossibilities() {
-		return possibleCorrespondences;
+		return tempPossibilities;
 	}
 	public boolean isCertain() {
 		return certain;
+	}
+	public boolean isAorI() {
+		return isAorI;
 	}
 }
