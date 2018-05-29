@@ -8,13 +8,60 @@ public class Main {
 	public static ArrayList<Letter> combos = new ArrayList<>();
 	public static ArrayList<ArrayList<String>> wordList = new ArrayList<>();
 	public static ArrayList<Word> encrypted = new ArrayList<>();
-
+	
+	public static ArrayList<String> caesarDictionary = new ArrayList<>();
+	
 	public static void main(String[] args) {
-
-		setupWordList("Large");
-		int totalQuotes = setupQuotes(new File("Input/AllQuotes.txt"));
-
+		
+		
+		
+		
+		// Caesar stuff
+		
+		setupCaesar(new File("ExclusiveDictionary.txt"));
+		int totalCaesar = setupCaesarQuotes(new File("Input/AllCaesarQuotes.txt"));
+		
 		int counter = 0;
+		
+		while(counter < totalCaesar) {
+			
+			try {
+				
+				Scanner in = new Scanner(new File("Input/CaesarQuote" + counter + ".txt"));
+				String s = in.nextLine();
+				
+				ArrayList<String> solutions = caesarSolve(s, caesarDictionary, s.split("[ ]").length / 10);
+				
+				if(solutions.isEmpty()) {
+					
+					System.err.println("Caesar cipher failed on quote " + counter + " (no solutions found). Copy the quote to non-caesar cipher to solve using that.");
+					
+				} else {
+					
+					PrintWriter p = new PrintWriter(new File("Output/SolvedCaesar" + counter + ".txt"));
+					
+					for(String x : solutions) {
+						p.println(x);
+					}
+					
+					p.close();
+					
+				}
+				
+			} catch(FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			
+			counter++;
+			
+		}
+		
+		// Do non-caesar stuff
+		
+		setupWordList("Large");
+		int totalQuotes = setupQuotes(new File("Input/AllNonCaesarQuotes.txt"));
+
+		counter = 0;
 
 		while(counter < totalQuotes){
 
@@ -25,14 +72,14 @@ public class Main {
 				combos.add(new Letter((char) i)); 
 			}
 
-			grabWordsFromFile(new File("Input/Quote" + counter + ".txt"));
+			grabWordsFromFile(new File("Input/NonCaesarQuote" + counter + ".txt"));
 			purifyWords();
 			deleteDuplicates();
 
 			populatePossible();
 			Collections.sort(encrypted);
 
-//			printWords(new File("Output/Before.txt"));
+//			printWords(new File("Output/NonCaesarBefore.txt"));
 
 			int count = 0;
 			boolean changed = true;
@@ -45,15 +92,15 @@ public class Main {
 
 				changed = singleCharDeduct() || changed;
 
-//				printWords(new File("Output/After" + count + ".txt"));
+//				printWords(new File("Output/NonCaesarAfter" + count + ".txt"));
 //				count++;
 
 			}
 			
-//			printWords(new File("Output/Possible" + count + ".txt"));
-//			printCombos(new File("Output/Combos" + counter + ".txt"));
+//			printWords(new File("Output/NonCaesarPossible" + count + ".txt"));
+//			printCombos(new File("Output/NonCaesarCombos" + counter + ".txt"));
 
-			printPossibleQuotes(new File("Input/Quote" + counter + ".txt"), new File("Output/Solved" + counter + ".txt"));
+			printPossibleQuotes(new File("Input/NonCaesarQuote" + counter + ".txt"), new File("Output/SolvedNonCaesar" + counter + ".txt"));
 
 			counter++;
 
@@ -71,7 +118,7 @@ public class Main {
 
 			while(in.hasNextLine()) {
 
-				PrintWriter p = new PrintWriter(new File("Input/Quote" + counter + ".txt"));
+				PrintWriter p = new PrintWriter(new File("Input/NonCaesarQuote" + counter + ".txt"));
 				p.print(in.nextLine());
 				p.close();
 
@@ -594,5 +641,124 @@ public class Main {
 		}
 
 	}
+	
+	//// Tony's stuff I transferred ////
+	
+	public static ArrayList<String> caesarSolve(String input, ArrayList<String> dic, int tol) {
+		ArrayList<String> possib = new ArrayList();
 
+		input = input.toLowerCase();
+
+		// loops through string and removes punctuation
+		String temp = "";
+		for (int j = 0; j < input.length(); j++) {
+			if (((int) input.charAt(j)) > 96 && ((int) input.charAt(j)) < 123 || (int) input.charAt(j) == 32) {
+				temp = temp + input.substring(j, j + 1);
+			}
+		}
+		input = temp;
+
+		// loops through the alphabet, checking for solutions with full words.
+		for (int i = 0; i < 26; i++) {
+			String curCipher = "";
+			// loops through each character in the word, adding specified amount to char
+			// value
+			for (int w = 0; w < input.length(); w++) {
+				int intValueOfChar = (int) input.charAt(w);
+
+				// keeps spaces
+				if (intValueOfChar == 32) {
+				}
+
+				// loops if value is past Z
+				else if (intValueOfChar + i > 122) {
+					intValueOfChar = 96 + ((intValueOfChar + i) - 122);
+				}
+
+				// adds one otherwise
+				else {
+					intValueOfChar += i;
+				}
+
+				curCipher = curCipher + ((char) intValueOfChar);
+
+			}
+			possib.add(curCipher);
+		}
+		return goodSolutions(possib, dic, tol);
+	}
+	
+	public static ArrayList<String> goodSolutions(ArrayList<String> possib, ArrayList<String> dic, int tol) {
+		// loops through every possibility
+		ArrayList<String> goodSol = new ArrayList();
+		for (int i = 0; i < possib.size(); i++) {
+			if (i % 100 == 0) {
+				System.out.println("checking for good solutions, checked " + i + " possibilities, found "
+						+ goodSol.size() + " solutions");
+			}
+			int totalCorrectWords = 0;
+			String[] curPossib = possib.get(i).split(" ");
+
+			// loops through each word in the possibility
+			for (int w = 0; w < curPossib.length; w++) {
+
+				// binary searches for that word in the ArrayList of all known words
+				if (dic.indexOf(curPossib[w]) > -1) {
+					totalCorrectWords++;
+				}
+			}
+			if (totalCorrectWords > tol) {
+				goodSol.add(possib.get(i) + " ||  total correct words: " + totalCorrectWords);
+			}
+
+		}
+		return goodSol;
+	}
+	
+	public static int setupCaesarQuotes(File f) {
+		
+		try {
+
+			Scanner in = new Scanner(f);
+
+			int counter = 0;
+
+			while(in.hasNextLine()) {
+
+				PrintWriter p = new PrintWriter(new File("Input/CaesarQuote" + counter + ".txt"));
+				p.print(in.nextLine());
+				p.close();
+
+				counter++;
+
+			}
+
+			in.close();
+			
+			return counter;
+			
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+			return 0;
+		}
+		
+	}
+	
+	public static void setupCaesar(File f) {
+		
+		try {
+			
+			Scanner in = new Scanner(f);
+			
+			while(in.hasNextLine()) {
+				caesarDictionary.add(in.nextLine());
+			}
+			
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+	}
+
+	
 }
