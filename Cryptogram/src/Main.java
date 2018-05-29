@@ -23,6 +23,7 @@ public class Main {
 		int count = 0;
 		boolean changed = true;
 		while(changed) {
+			changed = false;
 			changed = checkReverseCombos() || changed;
 			changed = sudokuCheck() || changed;
 			changed = singleCharDeduct() || changed;
